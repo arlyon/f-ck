@@ -3,6 +3,9 @@ use anyhow::Result;
 use polars::lazy::frame::LazyFrame;
 use polars::prelude::*;
 
+#[cfg(feature = "csv-support")]
+use polars::prelude::LazyCsvReader;
+
 pub struct DataReader;
 
 impl DataReader {
@@ -23,8 +26,15 @@ impl DataReader {
     }
 
     fn read_csv(path: &str) -> Result<LazyFrame> {
-        let df = LazyCsvReader::new(PlPath::new(path)).finish().unwrap();
-        Ok(df)
+        #[cfg(feature = "csv-support")]
+        {
+            let df = LazyCsvReader::new(PlPath::new(path)).finish().unwrap();
+            Ok(df)
+        }
+        #[cfg(not(feature = "csv-support"))]
+        {
+            Err(anyhow::anyhow!("CSV support not enabled for WASM build"))
+        }
     }
 
     fn read_tsv(_path: &str) -> Result<LazyFrame> {

@@ -6,7 +6,22 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.100"
 clap = "4.5.48"
-polars = { version = "0.51.0", features = ["lazy", "csv"] }
+getrandom = { version = "0.3.3", features = ["wasm_js"] }
+polars = { version = "0.51.0", features = ["lazy"], default-features = false }
 salsa = "0.23.0"
 serde = "1.0.225"
 serde_json = "1.0.145"
+wasm-bindgen = { version = "0.2.103", optional = true }
+wasm-bindgen-futures = { version = "0.4.53", optional = true }
+web-sys = { version = "0.3.80", optional = true }
+
+[dev-dependencies]
+tempfile = "3.22.0"
+
+[features]
+default = ["csv-support"]
+csv-support = ["polars/csv"]
+wasm = ["dep:wasm-bindgen", "dep:wasm-bindgen-futures", "dep:web-sys"]
+wasm-bindgen = ["dep:wasm-bindgen"]
+wasm-bindgen-futures = ["dep:wasm-bindgen-futures"]
+web-sys = ["dep:web-sys"]

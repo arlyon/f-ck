@@ -4,7 +4,9 @@
       "Bash(cargo add:*)",
       "Bash(cargo:*)",
       "Bash(rustc:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "WebSearch",
+      "Bash(RUSTFLAGS=\"--cfg=getrandom_wasm_js\" cargo check --target wasm32-unknown-unknown --no-default-features --features wasm)"
     ],
     "deny": [],
     "ask": []

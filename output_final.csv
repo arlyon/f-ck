@@ -1,0 +1,4 @@
+id,customer_id,customer_name,email,total_spent
+2,2,Jane Smith,jane@example.com,149.5
+1,1,John Doe,john@example.com,124.99
+3,3,Bob Johnson,bob@example.com,0.0

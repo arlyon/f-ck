@@ -2,18 +2,28 @@ use anyhow::Result;
 use polars::lazy::frame::LazyFrame;
 use polars::prelude::*;
 
+#[cfg(feature = "csv-support")]
+use polars::prelude::CsvWriter;
+
 pub struct DataWriter;
 
 impl DataWriter {
     pub fn write_csv(df: LazyFrame, output_path: &str) -> Result<()> {
-        let collected = df.collect()?;
+        #[cfg(feature = "csv-support")]
+        {
+            let collected = df.collect()?;
 
-        let mut file = std::fs::File::create(output_path)?;
-        CsvWriter::new(&mut file)
-            .include_header(true)
-            .finish(&mut collected.clone())?;
+            let mut file = std::fs::File::create(output_path)?;
+            CsvWriter::new(&mut file)
+                .include_header(true)
+                .finish(&mut collected.clone())?;
 
-        Ok(())
+            Ok(())
+        }
+        #[cfg(not(feature = "csv-support"))]
+        {
+            Err(anyhow::anyhow!("CSV support not enabled for WASM build"))
+        }
     }
 
     pub fn write_with_format(df: LazyFrame, output_path: &str, format: &str) -> Result<()> {
@@ -27,15 +37,22 @@ impl DataWriter {
     }
 
     fn write_tsv(df: LazyFrame, output_path: &str) -> Result<()> {
-        let collected = df.collect()?;
+        #[cfg(feature = "csv-support")]
+        {
+            let collected = df.collect()?;
 
-        let mut file = std::fs::File::create(output_path)?;
-        CsvWriter::new(&mut file)
-            .include_header(true)
-            .with_separator(b'\t')
-            .finish(&mut collected.clone())?;
+            let mut file = std::fs::File::create(output_path)?;
+            CsvWriter::new(&mut file)
+                .include_header(true)
+                .with_separator(b'\t')
+                .finish(&mut collected.clone())?;
 
-        Ok(())
+            Ok(())
+        }
+        #[cfg(not(feature = "csv-support"))]
+        {
+            Err(anyhow::anyhow!("TSV support not enabled for WASM build"))
+        }
     }
 
     fn write_xlsx(_df: LazyFrame, _output_path: &str) -> Result<()> {

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::{Arg, Command};
-use f_ck::{QueryPlan, JoinEngine, DataWriter};
+use f_ck::{QueryPlan, CachedEngine, DataWriter};
 use std::fs;
 
 fn main() -> Result<()> {
@@ -46,6 +46,18 @@ fn main() -> Result<()> {
                 .help("Limit preview to N rows")
                 .value_parser(clap::value_parser!(usize)),
         )
+        .arg(
+            Arg::new("no-cache")
+                .long("no-cache")
+                .help("Disable caching for this execution")
+                .action(clap::ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new("cache-stats")
+                .long("cache-stats")
+                .help("Show cache statistics")
+                .action(clap::ArgAction::SetTrue),
+        )
         .get_matches();
 
     let query_file = matches.get_one::<String>("query").unwrap();
@@ -53,6 +65,8 @@ fn main() -> Result<()> {
     let format = matches.get_one::<String>("format").unwrap();
     let preview_mode = matches.get_flag("preview");
     let limit = matches.get_one::<usize>("limit").copied();
+    let no_cache = matches.get_flag("no-cache");
+    let show_cache_stats = matches.get_flag("cache-stats");
 
     // Read and parse the query plan
     let query_json = fs::read_to_string(query_file)
@@ -63,9 +77,25 @@ fn main() -> Result<()> {
 
     println!("Executing query with {} sources...", query.sources.len());
     
-    // Execute the query
-    let result = JoinEngine::execute_query(&query)
-        .map_err(|e| anyhow::anyhow!("Query execution failed: {}", e))?;
+    // Create cached engine
+    let mut engine = CachedEngine::new();
+    
+    // Show cache stats if requested
+    if show_cache_stats {
+        let stats = engine.cache_stats();
+        println!("Cache Statistics:");
+        for (key, value) in stats {
+            println!("  {}: {}", key, value);
+        }
+    }
+    
+    // Execute the query with or without caching
+    let result = if no_cache {
+        use f_ck::JoinEngine;
+        JoinEngine::execute_query(&query)
+    } else {
+        engine.execute_query_cached(&query)
+    }.map_err(|e| anyhow::anyhow!("Query execution failed: {}", e))?;
 
     if preview_mode {
         // Preview mode - just print the results
