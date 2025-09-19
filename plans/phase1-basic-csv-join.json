@@ -1,0 +1,62 @@
+{
+  "phase": 1,
+  "title": "Basic CSV Join Implementation",
+  "description": "Initial implementation of CSV file joining with basic DSL support",
+  "components": {
+    "dsl": {
+      "description": "Simple JSON-based query format for defining joins",
+      "features": [
+        "Basic field mappings: source_field -> destination_field",
+        "Primary key specification for join operations", 
+        "Basic merge policies: First Match, Last Match"
+      ]
+    },
+    "csv_processing": {
+      "description": "CSV processing engine using Polars",
+      "features": [
+        "File reader using Polars for efficient CSV parsing",
+        "Schema detection and column type inference",
+        "Basic join engine using HashMap-based lookups",
+        "Output writer supporting CSV format"
+      ]
+    },
+    "cli_interface": {
+      "description": "Command line interface for basic operations",
+      "features": [
+        "Accept input CSV files as arguments",
+        "Load DSL query from JSON file",
+        "Execute join operation",
+        "Write result to output CSV file",
+        "Basic error handling and validation"
+      ]
+    }
+  },
+  "project_structure": {
+    "src/main.rs": "CLI entry point",
+    "src/dsl/mod.rs": "DSL types and parsing",
+    "src/dsl/query.rs": "Query execution logic", 
+    "src/engine/mod.rs": "Core engine",
+    "src/engine/reader.rs": "CSV input handling",
+    "src/engine/joiner.rs": "Join logic implementation",
+    "src/engine/writer.rs": "CSV output handling",
+    "src/lib.rs": "Library interface for WASM"
+  },
+  "dependencies": [
+    "polars - CSV processing and dataframes",
+    "serde + serde_json - DSL parsing", 
+    "clap - CLI argument parsing",
+    "anyhow - error handling"
+  ],
+  "wasm_preparation": [
+    "Design library interface that can be exposed to WASM",
+    "Separate CLI logic from core engine logic", 
+    "Use wasm-bindgen compatible types for public API",
+    "Test compilation to WASM target after basic implementation"
+  ],
+  "success_criteria": [
+    "CLI can join 2 CSV files using simple DSL",
+    "Output produces correct merged results",
+    "Code compiles to WASM target without errors",
+    "Foundation ready for incremental enhancement"
+  ]
+}
