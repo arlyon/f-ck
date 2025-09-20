@@ -1,7 +1,8 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct QueryPlan {
     pub sources: Vec<Source>,
     pub destination_schema: Vec<DestinationField>,
@@ -9,47 +10,47 @@ pub struct QueryPlan {
     pub mappings: Vec<Mapping>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct Source {
     pub id: String,
     pub path: PathBuf,
     pub format: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct DestinationField {
     pub name: String,
     pub data_type: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub enum PrimaryKeyLogic { 
     Or, 
     And 
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct PrimaryKeySpec {
     pub logic: PrimaryKeyLogic,
     pub keys: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct Mapping {
     pub destination_field: String,
     pub policy: MergePolicy,
     pub source_fields: Vec<SourceFieldSpec>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct SourceFieldSpec {
     pub id: String,
     pub source_file_id: String,
     pub column_name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 #[serde(tag = "type")]
 #[serde(rename_all = "camelCase")]
 pub enum MergePolicy {
@@ -68,6 +69,12 @@ impl QueryPlan {
 
     pub fn to_json(&self) -> anyhow::Result<String> {
         Ok(serde_json::to_string_pretty(self)?)
+    }
+
+    /// Generate JSON schema for QueryPlan validation
+    pub fn json_schema() -> anyhow::Result<String> {
+        let schema = schemars::schema_for!(QueryPlan);
+        Ok(serde_json::to_string_pretty(&schema)?)
     }
 
     pub fn validate(&self) -> anyhow::Result<()> {

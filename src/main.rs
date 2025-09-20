@@ -1,110 +1,120 @@
 use anyhow::Result;
-use clap::{Arg, Command};
+use clap::{Parser, Subcommand};
 use f_ck::{QueryPlan, CachedEngine, DataWriter};
 use std::fs;
 
+#[derive(Parser)]
+#[command(name = "f-ck")]
+#[command(about = "f*ck - fields combined with columnar keys")]
+#[command(version = "0.1.0")]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Execute a query plan
+    Run {
+        /// JSON file containing the query plan
+        #[arg(short, long, value_name = "FILE")]
+        query: String,
+        
+        /// Output file path
+        #[arg(short, long, value_name = "FILE")]
+        output: String,
+        
+        /// Output format (csv, tsv, xlsx, sqlite)
+        #[arg(short, long, value_name = "FORMAT", default_value = "csv")]
+        format: String,
+        
+        /// Preview the result without writing to file
+        #[arg(short, long)]
+        preview: bool,
+        
+        /// Limit preview to N rows
+        #[arg(short, long, value_name = "N")]
+        limit: Option<usize>,
+        
+        /// Disable caching for this execution
+        #[arg(long)]
+        no_cache: bool,
+        
+        /// Show cache statistics
+        #[arg(long)]
+        cache_stats: bool,
+    },
+    /// Generate JSON schema for query plan validation
+    Schema {
+        /// Output file for the schema (defaults to stdout)
+        #[arg(short, long, value_name = "FILE")]
+        output: Option<String>,
+    },
+}
+
 fn main() -> Result<()> {
-    let matches = Command::new("f-ck")
-        .about("f*ck - fields combined with columnar keys")
-        .version("0.1.0")
-        .arg(
-            Arg::new("query")
-                .short('q')
-                .long("query")
-                .value_name("FILE")
-                .help("JSON file containing the query plan")
-                .required(true),
-        )
-        .arg(
-            Arg::new("output")
-                .short('o')
-                .long("output")
-                .value_name("FILE")
-                .help("Output file path")
-                .required(true),
-        )
-        .arg(
-            Arg::new("format")
-                .short('f')
-                .long("format")
-                .value_name("FORMAT")
-                .help("Output format (csv, tsv, xlsx, sqlite)")
-                .default_value("csv"),
-        )
-        .arg(
-            Arg::new("preview")
-                .short('p')
-                .long("preview")
-                .help("Preview the result without writing to file")
-                .action(clap::ArgAction::SetTrue),
-        )
-        .arg(
-            Arg::new("limit")
-                .short('l')
-                .long("limit")
-                .value_name("N")
-                .help("Limit preview to N rows")
-                .value_parser(clap::value_parser!(usize)),
-        )
-        .arg(
-            Arg::new("no-cache")
-                .long("no-cache")
-                .help("Disable caching for this execution")
-                .action(clap::ArgAction::SetTrue),
-        )
-        .arg(
-            Arg::new("cache-stats")
-                .long("cache-stats")
-                .help("Show cache statistics")
-                .action(clap::ArgAction::SetTrue),
-        )
-        .get_matches();
+    let cli = Cli::parse();
 
-    let query_file = matches.get_one::<String>("query").unwrap();
-    let output_file = matches.get_one::<String>("output").unwrap();
-    let format = matches.get_one::<String>("format").unwrap();
-    let preview_mode = matches.get_flag("preview");
-    let limit = matches.get_one::<usize>("limit").copied();
-    let no_cache = matches.get_flag("no-cache");
-    let show_cache_stats = matches.get_flag("cache-stats");
+    match cli.command {
+        Commands::Run {
+            query,
+            output,
+            format,
+            preview,
+            limit,
+            no_cache,
+            cache_stats,
+        } => {
+            // Read and parse the query plan
+            let query_json = fs::read_to_string(&query)
+                .map_err(|e| anyhow::anyhow!("Failed to read query file '{}': {}", query, e))?;
+            
+            let query_plan = QueryPlan::from_json(&query_json)
+                .map_err(|e| anyhow::anyhow!("Failed to parse query: {}", e))?;
 
-    // Read and parse the query plan
-    let query_json = fs::read_to_string(query_file)
-        .map_err(|e| anyhow::anyhow!("Failed to read query file '{}': {}", query_file, e))?;
-    
-    let query = QueryPlan::from_json(&query_json)
-        .map_err(|e| anyhow::anyhow!("Failed to parse query: {}", e))?;
+            println!("Executing query with {} sources...", query_plan.sources.len());
+            
+            // Create cached engine
+            let mut engine = CachedEngine::new();
+            
+            // Show cache stats if requested
+            if cache_stats {
+                let stats = engine.cache_stats();
+                println!("Cache Statistics:");
+                for (key, value) in stats {
+                    println!("  {}: {}", key, value);
+                }
+            }
+            
+            // Execute the query with or without caching
+            let result = if no_cache {
+                use f_ck::JoinEngine;
+                JoinEngine::execute_query(&query_plan)
+            } else {
+                engine.execute_query_cached(&query_plan)
+            }.map_err(|e| anyhow::anyhow!("Query execution failed: {}", e))?;
 
-    println!("Executing query with {} sources...", query.sources.len());
-    
-    // Create cached engine
-    let mut engine = CachedEngine::new();
-    
-    // Show cache stats if requested
-    if show_cache_stats {
-        let stats = engine.cache_stats();
-        println!("Cache Statistics:");
-        for (key, value) in stats {
-            println!("  {}: {}", key, value);
+            if preview {
+                // Preview mode - just print the results
+                let preview_output = DataWriter::preview_data(result, limit)?;
+                println!("Preview:\n{}", preview_output);
+            } else {
+                // Write to output file
+                DataWriter::write_with_format(result, &output, &format)?;
+                println!("Results written to: {}", output);
+            }
         }
-    }
-    
-    // Execute the query with or without caching
-    let result = if no_cache {
-        use f_ck::JoinEngine;
-        JoinEngine::execute_query(&query)
-    } else {
-        engine.execute_query_cached(&query)
-    }.map_err(|e| anyhow::anyhow!("Query execution failed: {}", e))?;
-
-    if preview_mode {
-        // Preview mode - just print the results
-        let preview = DataWriter::preview_data(result, limit)?;
-        println!("Preview:\n{}", preview);
-    } else {
-        // Write to output file
-        DataWriter::write_with_format(result, output_file, format)?;
-        println!("Results written to: {}", output_file);
+        Commands::Schema { output } => {
+            let schema = QueryPlan::json_schema()?;
+            
+            if let Some(output_file) = output {
+                fs::write(&output_file, &schema)
+                    .map_err(|e| anyhow::anyhow!("Failed to write schema to '{}': {}", output_file, e))?;
+                println!("JSON schema written to: {}", output_file);
+            } else {
+                println!("{}", schema);
+            }
+        }
     }
 
     Ok(())
