@@ -1,0 +1,26 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: output_data
+---
+columns:
+  - customer_id
+  - customer_name
+  - email
+  - total_spent
+data:
+  - customer_id: "1"
+    customer_name: "\"John Doe\""
+    email: "\"john@example.com\""
+    total_spent: "124.99"
+  - customer_id: "2"
+    customer_name: "\"Jane Smith\""
+    email: "\"jane@example.com\""
+    total_spent: "149.5"
+  - customer_id: "3"
+    customer_name: "\"Bob Johnson\""
+    email: "\"bob@example.com\""
+    total_spent: "0.0"
+shape:
+  - 3
+  - 4
+truncated: false

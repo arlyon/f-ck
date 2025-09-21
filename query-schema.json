@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "QueryPlan",
+  "type": "object",
+  "properties": {
+    "destination_schema": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/DestinationField"
+      }
+    },
+    "mappings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Mapping"
+      }
+    },
+    "primary_keys": {
+      "$ref": "#/$defs/PrimaryKeySpec"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Source"
+      }
+    }
+  },
+  "required": [
+    "sources",
+    "destination_schema",
+    "primary_keys",
+    "mappings"
+  ],
+  "$defs": {
+    "DestinationField": {
+      "type": "object",
+      "properties": {
+        "data_type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "data_type"
+      ]
+    },
+    "Mapping": {
+      "type": "object",
+      "properties": {
+        "destination_field": {
+          "type": "string"
+        },
+        "policy": {
+          "$ref": "#/$defs/MergePolicy"
+        },
+        "source_fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceFieldSpec"
+          }
+        }
+      },
+      "required": [
+        "destination_field",
+        "policy",
+        "source_fields"
+      ]
+    },
+    "MergePolicy": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "priority": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "type": {
+              "type": "string",
+              "const": "firstMatch"
+            }
+          },
+          "required": [
+            "type",
+            "priority"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "sum"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "count"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "average"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "min"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "max"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        }
+      ]
+    },
+    "PrimaryKeyLogic": {
+      "type": "string",
+      "enum": [
+        "or",
+        "and"
+      ]
+    },
+    "PrimaryKeySpec": {
+      "type": "object",
+      "properties": {
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "logic": {
+          "$ref": "#/$defs/PrimaryKeyLogic"
+        }
+      },
+      "required": [
+        "logic",
+        "keys"
+      ]
+    },
+    "Source": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "format"
+      ]
+    },
+    "SourceFieldSpec": {
+      "type": "object",
+      "properties": {
+        "column_name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "source_file_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "source_file_id",
+        "column_name"
+      ]
+    }
+  }
+}

@@ -1,0 +1,24 @@
+---
+source: tests/dsl_tests.rs
+expression: query
+---
+sources:
+  data:
+    path: test_data/large_dataset.csv
+    format: csv
+steps:
+  - id: load_data
+    op: load
+    source: data
+  - id: filter_active
+    op: filter
+    input: load_data
+    predicate:
+      expression: "status = 'active'"
+  - id: select_columns
+    op: select
+    input: filter_active
+    columns:
+      - id
+      - name
+      - email

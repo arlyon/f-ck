@@ -1,0 +1,18 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: policy_types
+---
+- - id
+  - "FirstMatch { priority: [\"source1\", \"source2\"] }"
+- - name
+  - "FirstMatch { priority: [\"source1\"] }"
+- - total_value
+  - Sum
+- - order_count
+  - Count
+- - avg_order
+  - Average
+- - min_order
+  - Min
+- - max_order
+  - Max

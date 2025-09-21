@@ -1,0 +1,12 @@
+---
+source: tests/dsl_tests.rs
+expression: query
+---
+sources:
+  customers:
+    path: test_data/customers.csv
+    format: csv
+steps:
+  - id: load_customers
+    op: load
+    source: customers

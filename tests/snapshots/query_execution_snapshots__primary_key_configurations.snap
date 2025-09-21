@@ -1,0 +1,25 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: pk_configurations
+---
+- - and_logic
+  - keys:
+      - id
+      - email
+    logic: and
+- - or_logic
+  - keys:
+      - id
+      - phone
+      - email
+    logic: or
+- - single_key
+  - keys:
+      - customer_id
+    logic: and
+- - multiple_keys
+  - keys:
+      - first_name
+      - last_name
+      - birth_date
+    logic: and

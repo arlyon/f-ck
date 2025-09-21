@@ -1,0 +1,10 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: schema_snapshot
+---
+- - id
+  - Int64
+- - name
+  - String
+- - email
+  - String

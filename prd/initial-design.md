@@ -1,10 +1,10 @@
 Product Requirements Document: f*ck (Universal Columnar Data Merging Tool)
 
-    Version: 0.3
+    Version: 0.6
 
     Status: Draft
 
-    Date: 2025-09-19
+    Date: 2025-09-20
 
 1. Introduction / Overview
 
@@ -17,7 +17,7 @@ Users will visually map and merge data from various tabular sources (like CSVs).
 
     Secondary Goal: Drive viral adoption through an exceptionally intuitive and powerful user experience. The tool should be so effective that users will naturally share it with colleagues.
 
-    Technical Goal: Create a robust, lazy-evaluated, stream-processing engine that can be used headlessly via a CLI (f-ck), with the web UI acting as its primary configuration interface.
+    Technical Goal: Create a robust, lazy-evaluated, stream-processing engine that can be used headlessly via a CLI (f-ck). The engine's architecture will be built for high-performance, incremental computation to provide near-instantaneous feedback on query changes.
 
 3. Target Audience / User Personas
 
@@ -188,7 +188,7 @@ All data processing must happen client-side or on a secure, isolated server inst
 
     The core mapping interface will be built using react-flow or a similar library to represent data sources and mappings as nodes and edges.
 
-    Key Design Challenge: Visually representing the transitive closure logic. When a user connects A -> B and B -> C, the UI must provide a clear visual indication that A and C are now implicitly linked.
+    Key Design Challenge: Visually representing the transitive closure logic. When a user connects A -> B and then B -> C, the UI must provide a clear visual indication that A and C are now implicitly linked.
 
         Mermaid Diagram of Logic:
 
@@ -218,10 +218,26 @@ All data processing must happen client-side or on a secure, isolated server inst
 
         Percentage of users who save their merge configuration for reuse.
 
-9. Open Questions / Future Considerations
+9. Architectural Strategy
 
-    Address Normalization: Future versions should include specialized logic for normalizing and merging physical addresses, which often have typos and formatting inconsistencies.
+Following a detailed analysis of incremental computation models and Rust query engines, the project will adopt Pattern B: The Salsa-Wrapped Execution Approach.
+
+This architecture uses the Salsa framework to manage the execution of our core query engine (built with Polars/DataFusion). Salsa, a demand-driven incremental computation framework, will act as the "brains" of the engine, tracking dependencies between data sources and the final query result.
+
+Why this approach?
+This pattern is ideal for our interactive, user-driven application. It allows us to:
+
+    Use Familiar, Powerful APIs: We can leverage the highly expressive and ergonomic DataFrame and SQL APIs from Polars and DataFusion to define our complex merging logic.
+
+    Automate Caching and Invalidation: Salsa automatically handles the complexity of tracking which data has changed and what needs to be recomputed, simplifying development.
+
+    Achieve High Interactivity: When a user changes a source file or a mapping rule, only the parts of the computation that are directly affected will be re-run. Unchanged data and intermediate results will be reused from Salsa's cache, making the UI feel extremely responsive.
+
+In practice, this means when a user updates a single CSV file, only the initial parsing of that file is re-executed. The final merge query will then run again, but it will use the new data for the changed file and the cached, already-processed data for all other files, providing the performance of an incremental system with the development model of a traditional query engine.
+10. Open Questions / Future Considerations
+
+    Address Normalization: Future versions should include specialized logic for normalizing and merging physical addresses.
 
     Additional Data Sources: Plan for integration with data sources beyond file uploads (e.g., direct connections to PostgreSQL, Salesforce, Google Sheets).
 
-    Performance Benchmarking: What are the specific performance targets for the initial scan and real-time preview updates on benchmark datasets?
+    Performance Benchmarking: Define specific performance targets for the initial scan and real-time preview updates on benchmark datasets.

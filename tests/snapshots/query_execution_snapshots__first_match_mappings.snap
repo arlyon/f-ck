@@ -1,0 +1,19 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: first_match_mappings
+---
+- - customer_id
+  - - customers
+    - orders
+  - - - customers
+      - id
+    - - orders
+      - customer_id
+- - customer_name
+  - - customers
+  - - - customers
+      - name
+- - email
+  - - customers
+  - - - customers
+      - email

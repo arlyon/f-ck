@@ -1,0 +1,6 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: pk_config
+---
+- or
+- - customer_id

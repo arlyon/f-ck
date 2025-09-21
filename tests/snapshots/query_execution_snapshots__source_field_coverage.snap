@@ -1,0 +1,14 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: coverage_report
+---
+- - "customers:email"
+  - - email
+- - "customers:id"
+  - - customer_id
+- - "customers:name"
+  - - customer_name
+- - "orders:customer_id"
+  - - customer_id
+- - "orders:order_total"
+  - - total_spent

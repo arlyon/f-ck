@@ -1,0 +1,40 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: output_data
+---
+columns:
+  - customer_id
+  - id
+  - name
+  - total_value
+  - order_count
+data:
+  - customer_id: "1"
+    id: "1"
+    name: "\"Alice\""
+    order_count: "2"
+    total_value: "248.99"
+  - customer_id: "5"
+    id: "5"
+    name: "\"Eve\""
+    order_count: "1"
+    total_value: "29.99"
+  - customer_id: "4"
+    id: "4"
+    name: "\"Diana\""
+    order_count: "1"
+    total_value: "299.99"
+  - customer_id: "2"
+    id: "2"
+    name: "\"Bob\""
+    order_count: "2"
+    total_value: "149.49"
+  - customer_id: "3"
+    id: "3"
+    name: "\"Charlie\""
+    order_count: "1"
+    total_value: "49.99"
+shape:
+  - 5
+  - 5
+truncated: false

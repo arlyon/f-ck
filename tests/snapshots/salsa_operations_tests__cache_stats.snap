@@ -1,0 +1,6 @@
+---
+source: tests/salsa_operations_tests.rs
+expression: stats
+---
+total_inputs: 0
+computed_values: 0

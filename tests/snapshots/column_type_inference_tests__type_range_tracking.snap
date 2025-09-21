@@ -1,0 +1,10 @@
+---
+source: tests/column_type_inference_tests.rs
+expression: "schema.iter().map(|(k, v)|\n(k.clone(), format!(\"{:?}\", v))).collect::<Vec<_>>()"
+---
+- - id
+  - Int64
+- - data_type
+  - String
+- - value
+  - String

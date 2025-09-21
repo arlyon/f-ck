@@ -1,0 +1,5 @@
+---
+source: tests/v1_compatibility.rs
+expression: validation_result.unwrap_err().to_string()
+---
+QueryPlan must have at least one data source

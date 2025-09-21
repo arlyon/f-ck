@@ -1,0 +1,10 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: validation_results
+---
+- - customers
+  - true
+  - test_data/customers.csv
+- - orders
+  - true
+  - test_data/orders.csv

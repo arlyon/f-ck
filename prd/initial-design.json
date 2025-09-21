@@ -1,0 +1,127 @@
+{
+	"productName": "f*ck (Universal Columnar Data Merging Tool)",
+	"version": "0.6",
+	"status": "Draft",
+	"date": "2025-09-20",
+	"overview": "A tool, colloquially known as f*ck, with a Rust core and web UI to enable non-technical users to perform complex, graph-based data merging. The system is architected for high performance using a lazy-evaluated engine (Polars) orchestrated by a demand-driven incremental computation framework (Salsa) to provide a highly reactive user experience.",
+	"goals": {
+		"primary": "Enable non-technical users to independently merge and clean complex, messy tabular data with confidence.",
+		"secondary": "Drive viral adoption through an exceptionally intuitive and powerful user experience.",
+		"technical": "Create a robust, lazy-evaluated engine that uses Salsa for incremental computation to provide near-instantaneous feedback on query changes."
+	},
+	"targetAudience": {
+		"personaName": "The Data-Driven Analyst",
+		"description": "Users in roles like Marketing or Sales Ops who are proficient with spreadsheets but lack coding skills for advanced data manipulation.",
+		"painPoints": [
+			"Existing tools are either too simple or too complex.",
+			"Manual data merging is slow, error-prone, and not repeatable."
+		]
+	},
+	"userStories": [
+		{
+			"id": "STORY-01",
+			"title": "Merge customer data from three CSVs for a marketing campaign",
+			"platform": "Web UI",
+			"steps": [
+				"User uploads multiple source files to a visual canvas.",
+				"System scans files and detects data types, including mixed types in a single column.",
+				"User defines destination schema via drag-and-drop, including setting primary keys.",
+				"User maps source fields to destination fields by drawing links.",
+				"User is prompted to set merge policies (e.g., 'First Match') for conflicting fields.",
+				"A real-time preview drawer shows resolved and unresolved records with explanations.",
+				"User can inspect any merged value to see all source values that contributed to it.",
+				"User downloads the final merged file and can save the mapping 'recipe'."
+			],
+			"technicalImplementation": "The react-flow state (nodes and edges) is converted into the `QueryPlan` JSON format on every change (debounced for performance). This JSON is sent over a WebSocket to the Rust backend. The backend's query compiler translates this into a Salsa-tracked operation graph. The engine executes the graph to generate a preview (e.g., first 50 rows), streaming results back over the WebSocket to render in the UI's preview drawer."
+		},
+		{
+			"id": "STORY-02",
+			"title": "Automate a data cleaning pipeline via CLI",
+			"platform": "CLI",
+			"steps": [
+				"Developer creates a `query.json` (potentially exported from the UI) to define the merge logic.",
+				"Developer runs the engine via the command line: `f-ck --query query.json --output final.csv`",
+				"The engine lazily processes the data and streams the output to a specified file."
+			],
+			"technicalImplementation": "The CLI (`f-ck-cli`) uses `clap` to parse arguments. It reads the `query.json`, deserializes it into the `QueryPlan` struct, and passes it to the `f-ck-core` engine. The engine executes the full query (not just a preview) using its Polars and Salsa backend, and streams the resulting DataFrame to the specified output file using the `DataWriter` module."
+		}
+	],
+	"technicalAppendix": {
+		"architecturalDecision": {
+			"summary": "The core engine will be architected according to **Pattern B: The Salsa-Wrapped Execution Approach**, as detailed in the 'Architectures for Embeddable, Incrementally-Updated Analytical Engines in Rust' report. This pattern uses the Salsa framework to manage the execution of a high-performance query engine like DataFusion or Polars.",
+			"chosenPattern": "Pattern B: Salsa-Wrapped Execution",
+			"justification": "This architecture is the optimal choice for an interactive, user-driven tool like f*ck. It provides an ideal balance of developer ergonomics, high performance, and reactivity. The primary benefits are: 1) It allows the use of familiar and expressive SQL/DataFrame APIs from Polars/DataFusion. 2) The complexity of dependency tracking and cache invalidation is handled automatically by Salsa. 3) The on-demand, pull-based nature of Salsa is a perfect fit for a UI where computation is a direct response to a user's action, as opposed to a continuous stream of incoming data.",
+			"implementationNotes": "The implementation will involve modeling base data sources as Salsa input queries (e.g., `#[salsa::input] fn file_contents(db: &dyn Db, path: PathBuf)`). A chain of derived, tracked queries will then perform the processing steps, such as parsing files into DataFrames (`#[salsa::tracked] fn parsed_dataframe(...)`). A top-level tracked query will define the final analytical computation, taking all necessary parsed DataFrames as dependencies and executing the full merge query using DataFusion/Polars. Salsa's automatic memoization will ensure that unchanged DataFrames are reused across executions, providing coarse-grained incrementality.",
+			"alternativesConsidered": [
+				{
+					"pattern": "Pattern A: Native Incremental (Differential Dataflow)",
+					"reasonForRejection": "While providing the most efficient fine-grained incrementality, this approach requires expressing all logic within a dataflow model. This represents a significant paradigm shift and is better suited for continuous, streaming workloads rather than our interactive, request-response model."
+				},
+				{
+					"pattern": "Pattern C: Incremental-Aware Adapter (Trustfall)",
+					"reasonForRejection": "This pattern introduces an additional layer of complexity by adding a federated query engine. While powerful, it is not necessary for our core use case, which focuses on tabular data sources. It would be a candidate for future expansion to heterogeneous data sources."
+				}
+			]
+		},
+		"dslEvolution": {
+			"summary": "To effectively leverage Salsa's incremental computation, the user-facing DSL (`QueryPlan`) needs to be treated as a 'logical plan'. This plan will be compiled into a more granular, internal 'physical plan' or 'operation graph' that Salsa can track.",
+			"proposedStrategy": "Implement a 'Query Compiler' within `f-ck-core`. This component will take the user's `QueryPlan` and translate it into a graph of granular operations (e.g., LoadSource, LinkKeys, ApplyMergePolicy). Each node in this graph will correspond to a Salsa tracked function. When the user changes the `QueryPlan`, only the affected nodes in the internal graph will be recomputed.",
+			"impactOnArchitecture": "This strategy is a direct implementation of our chosen 'Salsa-Wrapped Execution' architecture. It creates a clean separation between the user-facing API and the internal query execution representation, which is essential for achieving our performance goals."
+		},
+		"backend": {
+			"path": "f-ck/",
+			"language": "Rust",
+			"coreLibraries": {
+				"polars": "The core data manipulation engine for executing query steps.",
+				"salsa": "For incremental computation and caching of the query graph.",
+				"axum": "For the web server framework and WebSocket handling.",
+				"petgraph": "For building the entity resolution graph for transitive closure.",
+				"serde": "For serializing and deserializing all JSON communication.",
+				"clap": "For parsing CLI arguments."
+			},
+			"crateStructure": [
+				{
+					"name": "f-ck-core",
+					"desc": "Contains all business logic: DSL definitions, the query compiler, Salsa database setup, and Polars plan construction."
+				},
+				{
+					"name": "f-ck-server",
+					"desc": "The Axum web server. Handles WebSocket connections, manages user sessions, and calls into `f-ck-core`."
+				},
+				{
+					"name": "f-ck-cli",
+					"desc": "The CLI entry point. Uses `clap` for parsing and calls into `f-ck-core`."
+				}
+			]
+		},
+		"apiDesign": {
+			"protocol": "WebSocket",
+			"messages": {
+				"clientToServer": [
+					{
+						"type": "UPDATE_QUERY",
+						"payload": "The full `QueryPlan` JSON object. Sent whenever the user's mapping changes."
+					},
+					{
+						"type": "REQUEST_PREVIEW_CHUNK",
+						"payload": "{ offset: number, limit: number }. For lazy-loading the preview table."
+					}
+				],
+				"serverToClient": [
+					{
+						"type": "PREVIEW_CHUNK",
+						"payload": "JSON representation of a slice of the resulting DataFrame."
+					},
+					{
+						"type": "QUERY_STATUS",
+						"payload": "{ status: 'processing' | 'success' | 'error', message?: string }."
+					},
+					{
+						"type": "SOURCE_METADATA",
+						"payload": "Schema and stats for a newly uploaded source file."
+					}
+				]
+			}
+		}
+	}
+}

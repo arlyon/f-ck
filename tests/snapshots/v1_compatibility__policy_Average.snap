@@ -1,0 +1,5 @@
+---
+source: tests/v1_compatibility.rs
+expression: deserialized
+---
+type: average

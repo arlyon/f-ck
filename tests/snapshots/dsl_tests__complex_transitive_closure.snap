@@ -1,0 +1,68 @@
+---
+source: tests/dsl_tests.rs
+expression: query
+---
+sources:
+  contacts:
+    path: test_data/contacts.csv
+    format: csv
+  orders:
+    path: test_data/orders.csv
+    format: csv
+  web_activity:
+    path: test_data/web_activity.csv
+    format: csv
+steps:
+  - id: load_contacts
+    op: load
+    source: contacts
+  - id: load_orders
+    op: load
+    source: orders
+  - id: load_web
+    op: load
+    source: web_activity
+  - id: link_contacts_orders
+    op: link
+    left: load_contacts
+    left_on: email
+    right: load_orders
+    right_on: customer_email
+  - id: link_orders_web
+    op: link
+    left: load_orders
+    left_on: customer_id
+    right: load_web
+    right_on: user_id
+  - id: customer_email
+    op: column
+    name: email
+    from: load_contacts
+    links:
+      - link_contacts_orders
+      - link_orders_web
+    source_column: email
+    policy:
+      type: firstMatch
+      priority:
+        - load_contacts
+  - id: total_order_value
+    op: column
+    name: total_spent
+    from: load_orders
+    links:
+      - link_contacts_orders
+      - link_orders_web
+    source_column: amount
+    policy:
+      type: sum
+  - id: last_activity
+    op: column
+    name: last_seen
+    from: load_web
+    links:
+      - link_contacts_orders
+      - link_orders_web
+    source_column: timestamp
+    policy:
+      type: max

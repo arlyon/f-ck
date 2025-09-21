@@ -1,0 +1,5 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: error_info
+---
+"Small data execution error: not found: unable to find column \"customer_id\"; valid columns: [\"__primary_order\", \"id\", \"name\", \"email\"]\n\nResolved plan until failure:\n\n\t---> FAILED HERE RESOLVING 'sink' <---\nCsv SCAN [test_data/orders.csv]\nPROJECT */3 COLUMNS"

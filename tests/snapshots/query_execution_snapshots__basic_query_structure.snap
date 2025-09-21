@@ -1,0 +1,63 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: query
+---
+sources:
+  - id: customers
+    path: test_data/customers.csv
+    format: csv
+  - id: orders
+    path: test_data/orders.csv
+    format: csv
+destination_schema:
+  - name: customer_id
+    data_type: Int64
+  - name: customer_name
+    data_type: String
+  - name: email
+    data_type: String
+  - name: total_spent
+    data_type: Float64
+primary_keys:
+  logic: or
+  keys:
+    - customer_id
+mappings:
+  - destination_field: customer_id
+    policy:
+      type: firstMatch
+      priority:
+        - customers
+        - orders
+    source_fields:
+      - id: cust_id
+        source_file_id: customers
+        column_name: id
+      - id: order_cust_id
+        source_file_id: orders
+        column_name: customer_id
+  - destination_field: customer_name
+    policy:
+      type: firstMatch
+      priority:
+        - customers
+    source_fields:
+      - id: name
+        source_file_id: customers
+        column_name: name
+  - destination_field: email
+    policy:
+      type: firstMatch
+      priority:
+        - customers
+    source_fields:
+      - id: email
+        source_file_id: customers
+        column_name: email
+  - destination_field: total_spent
+    policy:
+      type: sum
+    source_fields:
+      - id: order_total
+        source_file_id: orders
+        column_name: order_total

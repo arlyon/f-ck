@@ -1,0 +1,6 @@
+---
+source: tests/salsa_operations_tests.rs
+expression: "(result1, result2)"
+---
+- result_7547857546926115637
+- result_17953486178677372945

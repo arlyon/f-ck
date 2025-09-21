@@ -1,0 +1,145 @@
+---
+source: tests/v1_compatibility.rs
+expression: parsed_schema
+---
+$defs:
+  DestinationField:
+    properties:
+      data_type:
+        type: string
+      name:
+        type: string
+    required:
+      - name
+      - data_type
+    type: object
+  Mapping:
+    properties:
+      destination_field:
+        type: string
+      policy:
+        $ref: "#/$defs/MergePolicy"
+      source_fields:
+        items:
+          $ref: "#/$defs/SourceFieldSpec"
+        type: array
+    required:
+      - destination_field
+      - policy
+      - source_fields
+    type: object
+  MergePolicy:
+    oneOf:
+      - properties:
+          priority:
+            items:
+              type: string
+            type: array
+          type:
+            const: firstMatch
+            type: string
+        required:
+          - type
+          - priority
+        type: object
+      - properties:
+          type:
+            const: sum
+            type: string
+        required:
+          - type
+        type: object
+      - properties:
+          type:
+            const: count
+            type: string
+        required:
+          - type
+        type: object
+      - properties:
+          type:
+            const: average
+            type: string
+        required:
+          - type
+        type: object
+      - properties:
+          type:
+            const: min
+            type: string
+        required:
+          - type
+        type: object
+      - properties:
+          type:
+            const: max
+            type: string
+        required:
+          - type
+        type: object
+  PrimaryKeyLogic:
+    enum:
+      - or
+      - and
+    type: string
+  PrimaryKeySpec:
+    properties:
+      keys:
+        items:
+          type: string
+        type: array
+      logic:
+        $ref: "#/$defs/PrimaryKeyLogic"
+    required:
+      - logic
+      - keys
+    type: object
+  Source:
+    properties:
+      format:
+        type: string
+      id:
+        type: string
+      path:
+        type: string
+    required:
+      - id
+      - path
+      - format
+    type: object
+  SourceFieldSpec:
+    properties:
+      column_name:
+        type: string
+      id:
+        type: string
+      source_file_id:
+        type: string
+    required:
+      - id
+      - source_file_id
+      - column_name
+    type: object
+$schema: "https://json-schema.org/draft/2020-12/schema"
+properties:
+  destination_schema:
+    items:
+      $ref: "#/$defs/DestinationField"
+    type: array
+  mappings:
+    items:
+      $ref: "#/$defs/Mapping"
+    type: array
+  primary_keys:
+    $ref: "#/$defs/PrimaryKeySpec"
+  sources:
+    items:
+      $ref: "#/$defs/Source"
+    type: array
+required:
+  - sources
+  - destination_schema
+  - primary_keys
+  - mappings
+title: QueryPlan
+type: object

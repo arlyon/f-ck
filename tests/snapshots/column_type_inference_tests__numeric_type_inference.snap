@@ -1,0 +1,14 @@
+---
+source: tests/column_type_inference_tests.rs
+expression: "schema.iter().map(|(k, v)|\n(k.clone(), format!(\"{:?}\", v))).collect::<Vec<_>>()"
+---
+- - id
+  - Int64
+- - small_int
+  - Int64
+- - big_int
+  - Int64
+- - decimal
+  - Float64
+- - percentage
+  - Float64

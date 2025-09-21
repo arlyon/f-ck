@@ -1,0 +1,8 @@
+---
+source: tests/v1_compatibility.rs
+expression: deserialized
+---
+type: firstMatch
+priority:
+  - source1
+  - source2

@@ -1,0 +1,5 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: error_info
+---
+"Aggregation query execution error: duplicate: column with name 'customer_id' has more than one occurrence\n\nResolved plan until failure:\n\n\t---> FAILED HERE RESOLVING 'sink' <---\nCsv SCAN [test_data/small_orders.csv]\nPROJECT */5 COLUMNS"

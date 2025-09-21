@@ -1,0 +1,8 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: aggregation_details
+---
+- total_spent
+- Sum
+- - - orders
+    - order_total

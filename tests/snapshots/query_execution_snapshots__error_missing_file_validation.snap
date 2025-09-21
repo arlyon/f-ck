@@ -1,0 +1,10 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: validation_results
+---
+- - customers
+  - false
+  - file_not_found
+- - orders
+  - true
+  - success

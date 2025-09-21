@@ -1,2 +1,4 @@
 [tools]
+"cargo:cargo-insta" = "latest"
+"cargo:https://github.com/cksac/fake-rs" = { version = "latest", features = "cli" }
 rust = "nightly"

@@ -1,0 +1,10 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: schema_snapshot
+---
+- - customer_id
+  - Int64
+- - order_total
+  - Float64
+- - product
+  - String

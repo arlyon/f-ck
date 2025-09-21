@@ -1,0 +1,5 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: error_info
+---
+"Aggregation query error: File not found: test_data/small_orders.csv"

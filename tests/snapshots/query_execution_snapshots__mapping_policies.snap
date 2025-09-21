@@ -1,0 +1,16 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: policies
+---
+- - customer_id
+  - "FirstMatch { priority: [\"customers\", \"orders\"] }"
+  - 2
+- - customer_name
+  - "FirstMatch { priority: [\"customers\"] }"
+  - 1
+- - email
+  - "FirstMatch { priority: [\"customers\"] }"
+  - 1
+- - total_spent
+  - Sum
+  - 1

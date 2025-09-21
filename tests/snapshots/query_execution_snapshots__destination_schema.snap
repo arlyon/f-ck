@@ -1,0 +1,12 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: dest_schema
+---
+- - customer_id
+  - Int64
+- - customer_name
+  - String
+- - email
+  - String
+- - total_spent
+  - Float64

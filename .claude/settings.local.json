@@ -6,7 +6,13 @@
       "Bash(rustc:*)",
       "Bash(mkdir:*)",
       "WebSearch",
-      "Bash(RUSTFLAGS=\"--cfg=getrandom_wasm_js\" cargo check --target wasm32-unknown-unknown --no-default-features --features wasm)"
+      "Bash(RUSTFLAGS=\"--cfg=getrandom_wasm_js\" cargo check --target wasm32-unknown-unknown --no-default-features --features wasm)",
+      "Bash(mise use:*)",
+      "Bash(faker:*)",
+      "Bash(fake --help)",
+      "Bash(fake:*)",
+      "Bash(for i in {1..100})",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

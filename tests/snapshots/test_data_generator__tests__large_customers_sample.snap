@@ -1,0 +1,9 @@
+---
+source: tests/test_data_generator.rs
+expression: customers_lines
+---
+- "customer_id,first_name,last_name,email,phone,address,city,country,postal_code,signup_date,last_login,is_active,total_orders,lifetime_value"
+- "1,Krystal,Luettgen,evie@example.com,(775) 704-6728,Volkman Fort,Donnelly furt,SE,41136-5467,2023-02-02,2023-02-02T01:01:00Z,true,1,1.01"
+- "2,Lemuel,Borer,robin@example.net,(379) 425-6150 x4433,Maximilian Burg,Klein mouth,PF,15557-7739,2023-03-03,2023-03-03T02:02:00Z,true,2,2.02"
+- "3,Tomasa,Streich,carmel@example.net,1-687-089-4310 x3803,Edna Avenue,Connelly view,CK,45257-2884,2023-04-04,2023-04-04T03:03:00Z,true,3,3.03"
+- "4,Constantin,Ebert,alfonzo@example.com,1-202-167-0550,Funk Circle,Cassin land,ML,45950-9070,2023-05-05,2023-05-05T04:04:00Z,true,4,4.04"

@@ -1,0 +1,49 @@
+---
+source: tests/v1_compatibility.rs
+expression: query_plan
+---
+sources:
+  - id: customers
+    path: test_data/customers.csv
+    format: csv
+  - id: orders
+    path: test_data/orders.csv
+    format: csv
+destination_schema:
+  - name: customer_id
+    data_type: Integer
+  - name: customer_name
+    data_type: String
+  - name: total_spent
+    data_type: Float
+primary_keys:
+  logic: or
+  keys:
+    - customer_id
+mappings:
+  - destination_field: customer_id
+    policy:
+      type: firstMatch
+      priority:
+        - customers
+        - orders
+    source_fields:
+      - id: cust_id
+        source_file_id: customers
+        column_name: id
+  - destination_field: customer_name
+    policy:
+      type: firstMatch
+      priority:
+        - customers
+    source_fields:
+      - id: cust_name
+        source_file_id: customers
+        column_name: name
+  - destination_field: total_spent
+    policy:
+      type: sum
+    source_fields:
+      - id: order_total
+        source_file_id: orders
+        column_name: total

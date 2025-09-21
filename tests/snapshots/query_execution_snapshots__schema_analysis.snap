@@ -1,0 +1,23 @@
+---
+source: tests/query_execution_snapshots.rs
+expression: schema_analysis
+---
+- - customers
+  - - - id
+      - Int64
+    - - name
+      - String
+    - - email
+      - String
+  - - id
+    - name
+    - email
+- - orders
+  - - - customer_id
+      - Int64
+    - - order_total
+      - Float64
+    - - product
+      - String
+  - - customer_id
+    - order_total

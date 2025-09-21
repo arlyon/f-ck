@@ -1,0 +1,45 @@
+---
+source: tests/dsl_tests.rs
+expression: query
+---
+sources:
+  source1:
+    path: test_data/source1.csv
+    format: csv
+  source2:
+    path: test_data/source2.csv
+    format: csv
+steps:
+  - id: load_s1
+    op: load
+    source: source1
+  - id: load_s2
+    op: load
+    source: source2
+  - id: link_sources
+    op: link
+    left: load_s1
+    left_on: id
+    right: load_s2
+    right_on: id
+  - id: email_column
+    op: column
+    name: email
+    from: load_s1
+    links:
+      - link_sources
+    source_column: email
+    policy:
+      type: firstMatch
+      priority:
+        - load_s1
+        - load_s2
+  - id: total_revenue
+    op: column
+    name: total_revenue
+    from: load_s1
+    links:
+      - link_sources
+    source_column: revenue
+    policy:
+      type: sum
