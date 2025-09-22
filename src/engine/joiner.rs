@@ -1,6 +1,5 @@
 use crate::dsl::{DslQuery, Mapping, MergePolicy, Query, QueryPlan};
 use crate::engine::DataReader;
-use crate::{DataWriter, PrimaryKeyLogic};
 use anyhow::Result;
 use polars::lazy::frame::LazyFrame;
 use polars::prelude::*;
@@ -14,6 +13,7 @@ impl JoinEngine {
     pub fn execute_query(query: &QueryPlan) -> Result<LazyFrame> {
         query.validate()?;
 
+        #[cfg(not(feature = "wasm"))]
         let start = Instant::now();
 
         let mut dataframes: HashMap<String, LazyFrame> = HashMap::new();
@@ -28,11 +28,15 @@ impl JoinEngine {
         for source in &query.sources {
             let df = DataReader::read_source(source)?;
 
-            dataframes.insert(source.id.clone(), df);
+            dataframes.insert(source.id().to_owned(), df);
         }
 
-        let df_loaded = Instant::now();
-        tracing::debug!("Dataframes loaded in {:?}", df_loaded - start);
+        #[cfg(not(feature = "wasm"))]
+        let df_loaded = {
+            let df_loaded = Instant::now();
+            tracing::debug!("Dataframes loaded in {:?}", df_loaded - start);
+            df_loaded
+        };
 
         let out = match &query.query {
             Query::Dsl(query) => Self::apply(query, dataframes),
@@ -45,6 +49,7 @@ impl JoinEngine {
             }
         }?;
 
+        #[cfg(not(feature = "wasm"))]
         tracing::debug!("Dataframes loaded in {:?}", Instant::now() - df_loaded);
 
         Ok(out)

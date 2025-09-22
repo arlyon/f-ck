@@ -4,6 +4,11 @@ use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, str::FromStr};
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
+#[cfg_attr(
+    feature = "wasm",
+    derive(tsify::Tsify),
+    tsify(into_wasm_abi, from_wasm_abi)
+)]
 pub struct QueryPlan {
     pub sources: Vec<Source>,
     pub query: Query,
@@ -46,6 +51,11 @@ impl QueryPlan {
 }
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
+#[cfg_attr(
+    feature = "wasm",
+    derive(tsify::Tsify),
+    tsify(into_wasm_abi, from_wasm_abi)
+)]
 #[serde(tag = "type")]
 #[serde(rename_all = "camelCase")]
 pub enum Query {
@@ -54,6 +64,11 @@ pub enum Query {
 }
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
+#[cfg_attr(
+    feature = "wasm",
+    derive(tsify::Tsify),
+    tsify(into_wasm_abi, from_wasm_abi)
+)]
 pub struct DslQuery {
     pub destination_schema: Vec<DestinationField>,
     pub primary_keys: PrimaryKeySpec,
@@ -75,12 +90,52 @@ impl FromStr for Query {
 }
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
-pub struct Source {
-    pub id: String,
-    pub path: PathBuf,
-    pub format: String,
+#[cfg_attr(
+    feature = "wasm",
+    derive(tsify::Tsify),
+    tsify(into_wasm_abi, from_wasm_abi)
+)]
+pub enum Source {
+    #[cfg(not(feature = "wasm"))]
+    File {
+        id: String,
+        path: PathBuf,
+        format: String,
+    },
+    Url {
+        id: String,
+        url: String,
+        format: String,
+    },
+    Blob {
+        id: String,
+        #[schemars(with = "Vec<u8>")]
+        blob: serde_bytes::ByteBuf,
+        format: String,
+    },
 }
 
+impl Source {
+    pub fn id(&self) -> &str {
+        match self {
+            #[cfg(not(feature = "wasm"))]
+            Source::File { id, .. } => id,
+            Source::Url { id, .. } => id,
+            Source::Blob { id, .. } => id,
+        }
+    }
+
+    pub fn format(&self) -> &str {
+        match self {
+            #[cfg(not(feature = "wasm"))]
+            Source::File { format, .. } => format,
+            Source::Url { format, .. } => format,
+            Source::Blob { format, .. } => format,
+        }
+    }
+}
+
+#[cfg(not(feature = "wasm"))]
 impl FromStr for Source {
     type Err = anyhow::Error;
 
@@ -95,7 +150,7 @@ impl FromStr for Source {
             .ok_or_else(|| anyhow::anyhow!("Path must have an extension"))?
             .to_str()
             .ok_or_else(|| anyhow::anyhow!("Invalid extension"))?;
-        Ok(Self {
+        Ok(Self::File {
             id: id.to_owned(),
             format: ext.to_owned(),
             path,
@@ -104,12 +159,22 @@ impl FromStr for Source {
 }
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
+#[cfg_attr(
+    feature = "wasm",
+    derive(tsify::Tsify),
+    tsify(into_wasm_abi, from_wasm_abi)
+)]
 pub struct DestinationField {
     pub name: String,
     pub data_type: String,
 }
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
+#[cfg_attr(
+    feature = "wasm",
+    derive(tsify::Tsify),
+    tsify(into_wasm_abi, from_wasm_abi)
+)]
 #[serde(rename_all = "camelCase")]
 pub enum PrimaryKeyLogic {
     Or,
@@ -117,11 +182,21 @@ pub enum PrimaryKeyLogic {
 }
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
+#[cfg_attr(
+    feature = "wasm",
+    derive(tsify::Tsify),
+    tsify(into_wasm_abi, from_wasm_abi)
+)]
 pub struct PrimaryKeySpec {
     pub keys: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
+#[cfg_attr(
+    feature = "wasm",
+    derive(tsify::Tsify),
+    tsify(into_wasm_abi, from_wasm_abi)
+)]
 pub struct Mapping {
     pub destination_field: String,
     pub policy: MergePolicy,
@@ -129,12 +204,22 @@ pub struct Mapping {
 }
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
+#[cfg_attr(
+    feature = "wasm",
+    derive(tsify::Tsify),
+    tsify(into_wasm_abi, from_wasm_abi)
+)]
 pub struct SourceFieldSpec {
     pub source_file_id: String,
     pub column_name: String,
 }
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
+#[cfg_attr(
+    feature = "wasm",
+    derive(tsify::Tsify),
+    tsify(into_wasm_abi, from_wasm_abi)
+)]
 #[serde(tag = "type")]
 #[serde(rename_all = "camelCase")]
 pub enum MergePolicy {
@@ -192,11 +277,11 @@ impl QueryPlan {
 
                 // Validate that source IDs referenced in mappings exist
                 let source_ids: std::collections::HashSet<_> =
-                    self.sources.iter().map(|s| &s.id).collect();
+                    self.sources.iter().map(|s| s.id()).collect();
 
                 for mapping in mappings {
                     for source_field in &mapping.source_fields {
-                        if !source_ids.contains(&source_field.source_file_id) {
+                        if !source_ids.contains(source_field.source_file_id.as_str()) {
                             return Err(anyhow::anyhow!(
                                 "Mapping references unknown source: {}",
                                 source_field.source_file_id

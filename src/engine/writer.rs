@@ -1,48 +1,12 @@
 use anyhow::Result;
-use polars::lazy::frame::LazyFrame;
-use polars::prelude::file::DynWriteable;
 use polars::prelude::*;
+use polars_io::SerWriter;
 use std::io::Write;
 
 #[cfg(feature = "csv-support")]
-use polars::prelude::CsvWriter;
+use polars_io::prelude::CsvWriter;
 
 pub struct DataWriter;
-
-struct WriteWrapper<W: Write + Send> {
-    writer: W,
-}
-
-impl<'a, W: Write + Send> Write for WriteWrapper<W> {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        tracing::debug!("writing {}", String::from_utf8_lossy(buf));
-        self.writer.write(buf)
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        self.writer.flush()
-    }
-}
-impl<W: Write + Send + 'static> DynWriteable for WriteWrapper<W> {
-    fn as_dyn_write(&self) -> &(dyn std::io::Write + Send + 'static) {
-        &self.writer
-    }
-
-    fn as_mut_dyn_write(&mut self) -> &mut (dyn std::io::Write + Send + 'static) {
-        &mut self.writer
-    }
-
-    fn close(self: Box<Self>) -> std::io::Result<()> {
-        Ok(())
-    }
-
-    fn sync_on_close(
-        &mut self,
-        _sync_on_close: sync_on_close::SyncOnCloseType,
-    ) -> std::io::Result<()> {
-        Ok(())
-    }
-}
 
 impl DataWriter {
     pub fn write_csv<F: IntoLazy>(df: F, output_path: &str) -> Result<()> {
@@ -57,23 +21,7 @@ impl DataWriter {
     ) -> Result<()> {
         #[cfg(feature = "csv-support")]
         {
-            use std::sync::Mutex;
-
             let start = std::time::Instant::now();
-
-            // let df = df
-            //     .lazy()
-            //     .sink_csv(
-            //         SinkTarget::Dyn(SpecialEq::new(Arc::new(Mutex::new(Some(Box::new(
-            //             WriteWrapper { writer },
-            //         )))))),
-            //         CsvWriterOptions::default(),
-            //         None,
-            //         SinkOptions::default(),
-            //     )?
-            //     .collect()?;
-
-            // println!("collected {}", df.size());
 
             CsvWriter::new(writer).finish(&mut df.lazy().collect()?)?;
 

@@ -3,25 +3,40 @@ use anyhow::Result;
 use polars::lazy::frame::LazyFrame;
 use polars::prelude::*;
 
+use polars_io::prelude::CsvReader;
+
+use polars_io::SerReader;
 #[cfg(feature = "csv-support")]
-use polars::prelude::LazyCsvReader;
+use polars_lazy::prelude::LazyCsvReader;
 
 pub struct DataReader;
 
 impl DataReader {
     pub fn read_source(source: &Source) -> Result<LazyFrame> {
-        let path = &source.path;
-
-        if !path.exists() {
-            return Err(anyhow::anyhow!("File not found: {}", path.display()));
-        }
-
-        match source.format.as_str() {
-            "csv" => Self::read_csv(&path.to_string_lossy()),
-            "tsv" => Self::read_tsv(&path.to_string_lossy()),
-            "xlsx" => Self::read_xlsx(&path.to_string_lossy()),
-            "sqlite" => Self::read_sqlite(&path.to_string_lossy()),
-            _ => Err(anyhow::anyhow!("Unsupported format: {}", source.format)),
+        match source {
+            #[cfg(not(feature = "wasm"))]
+            Source::File { path, .. } if !path.exists() => {
+                Err(anyhow::anyhow!("File not found: {}", path.display()))
+            }
+            #[cfg(not(feature = "wasm"))]
+            Source::File { path, format, .. } => match format.as_str() {
+                "csv" => Self::read_csv(&path.to_string_lossy()),
+                "tsv" => Self::read_tsv(&path.to_string_lossy()),
+                "xlsx" => Self::read_xlsx(&path.to_string_lossy()),
+                "sqlite" => Self::read_sqlite(&path.to_string_lossy()),
+                fmt => Err(anyhow::anyhow!("Unsupported format: {}", fmt)),
+            },
+            Source::Url { url, .. } => {
+                // download the blob and then produce a dataframe wrapped in a lazy frame
+                // let body = reqwest::blocking::get(url)?.bytes()?;
+                // let cursor = std::io::Cursor::new(body.to_vec());
+                // Ok(CsvReader::new(cursor).finish()?.lazy())
+                todo!()
+            }
+            Source::Blob { blob, .. } => {
+                let cursor = std::io::Cursor::new(blob);
+                Ok(CsvReader::new(cursor).finish()?.lazy())
+            }
         }
     }
 

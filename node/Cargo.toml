@@ -1,0 +1,31 @@
+[package]
+name = "f-ck-wasm"
+version = "0.1.0"
+edition = "2021"
+description = "WebAssembly bindings for f*ck - fields combined with columnar keys"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/arlyon/f-ck"
+
+[lib]
+crate-type = ["cdylib"]
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
+[dependencies]
+f-ck = { path = "..", default-features = false, features = ["wasm", "csv-support"] }
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+console_error_panic_hook = "0.1"
+serde-wasm-bindgen = "0.6.5"
+tracing-wasm = "0.2.1"
+polars-jsonschema-bridge = {version = "0.2.0", path = "../../polars-genson/polars-jsonschema-bridge"}
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+  "console",
+]

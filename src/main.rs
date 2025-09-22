@@ -60,14 +60,6 @@ struct RunArgs {
     /// Limit preview to N rows
     #[arg(short, long, value_name = "N")]
     limit: Option<usize>,
-
-    /// Disable caching for this execution
-    #[arg(long)]
-    no_cache: bool,
-
-    /// Show cache statistics
-    #[arg(long)]
-    cache_stats: bool,
 }
 
 #[tracing::instrument]
@@ -84,12 +76,11 @@ fn main() -> Result<()> {
     let (
         query_plan,
         RunArgs {
-            cache_stats,
             format,
             limit,
-            no_cache,
             output,
             preview,
+            ..
         },
     ) = match cli.command {
         Commands::Schema { output } => {

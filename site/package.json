@@ -1,0 +1,42 @@
+{
+	"name": "query-builder",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc && vite build",
+		"preview": "vite preview"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@arlyon/f-ck-wasm": "link:../node/pkg",
+		"@types/d3-force": "^3.0.10",
+		"@xyflow/react": "^12.8.5",
+		"clsx": "^2.1.1",
+		"d3-force": "^3.0.0",
+		"lucide-react": "^0.544.0",
+		"react": "^19.1.1",
+		"react-dom": "^19.1.1",
+		"tailwind-merge": "^3.3.1"
+	},
+	"devDependencies": {
+		"@tailwindcss/vite": "^4.1.13",
+		"@types/json-schema": "^7.0.15",
+		"@types/node": "^24.5.2",
+		"@types/react": "^19.1.13",
+		"@types/react-dom": "^19.1.9",
+		"@vitejs/plugin-react": "^5.0.3",
+		"rollup": "^4.52.0",
+		"tailwindcss": "^4.1.13",
+		"tw-animate-css": "^1.3.8",
+		"typescript": "^5.9.2",
+		"vite": "^7.1.7",
+		"vite-plugin-top-level-await": "^1.6.0",
+		"vite-plugin-wasm": "^3.5.0",
+		"vite-tsconfig-paths": "^5.1.4"
+	}
+}
