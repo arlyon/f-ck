@@ -1,0 +1,22 @@
+---
+source: tests/fixtures.rs
+expression: preview_output
+---
+shape: (99_441, 1)
+┌─────────────────────────────────┐
+│ customer_id                     │
+│ ---                             │
+│ str                             │
+╞═════════════════════════════════╡
+│ 06b8999e2fba1a1fbc88172c00ba8b… │
+│ 18955e83d337fd6b2def6b18a428ac… │
+│ 4e7b3e00288586ebd08712fdd0374a… │
+│ b2b6027bc5c5109e529d4dc6358b12… │
+│ 4f2d8ab171c80ec8364f7c12e35b23… │
+│ …                               │
+│ 17ddf5dd5d51696bb3d7c6291687be… │
+│ e7b71a9017aa05c9a7fd292d714858… │
+│ 5e28dfe12db7fb50a4b2f691faecea… │
+│ 56b18e2166679b8a959d72dd06da27… │
+│ 274fa6071e5e17fe303b9748641082… │
+└─────────────────────────────────┘

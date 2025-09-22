@@ -1,0 +1,4 @@
+customer_id,order_total,product
+1,99.99,Widget A
+1,25.0,Widget C
+2,149.5,Widget B

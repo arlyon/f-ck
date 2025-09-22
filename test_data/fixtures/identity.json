@@ -1,0 +1,47 @@
+{
+	"$schema": "../query-schema.json",
+	"sources": [
+		{
+			"id": "customers1",
+			"path": "test_data/olist/olist_customers_dataset.csv",
+			"format": "csv"
+		},
+		{
+			"id": "customers2",
+			"path": "test_data/olist/olist_customers_dataset.csv",
+			"format": "csv"
+		}
+	],
+	"query": {
+		"type": "dsl",
+		"destination_schema": [
+			{
+				"name": "customer_id",
+				"data_type": "number"
+			}
+		],
+		"primary_keys": {
+			"logic": "and",
+			"keys": ["customer_id"]
+		},
+		"mappings": [
+			{
+				"destination_field": "customer_id",
+				"policy": {
+					"type": "firstMatch"
+				},
+				"source_fields": [
+					{
+						"column_name": "customer_id",
+						"id": "abcd",
+						"source_file_id": "customers1"
+					},
+					{
+						"column_name": "customer_id",
+						"source_file_id": "customers2"
+					}
+				]
+			}
+		]
+	}
+}

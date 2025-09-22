@@ -9,80 +9,82 @@ sources:
   - id: source2
     path: test_data/small_orders.csv
     format: csv
-destination_schema:
-  - name: id
-    data_type: Int64
-  - name: name
-    data_type: String
-  - name: total_value
-    data_type: Float64
-  - name: order_count
-    data_type: Int64
-  - name: avg_order
-    data_type: Float64
-  - name: min_order
-    data_type: Float64
-  - name: max_order
-    data_type: Float64
-primary_keys:
-  logic: and
-  keys:
-    - id
-mappings:
-  - destination_field: id
-    policy:
-      type: firstMatch
-      priority:
-        - source1
-        - source2
-    source_fields:
-      - id: customer_id_1
-        source_file_id: source1
-        column_name: customer_id
-      - id: customer_id_2
-        source_file_id: source2
-        column_name: customer_id
-  - destination_field: name
-    policy:
-      type: firstMatch
-      priority:
-        - source1
-    source_fields:
-      - id: first_name
-        source_file_id: source1
-        column_name: first_name
-  - destination_field: total_value
-    policy:
-      type: sum
-    source_fields:
-      - id: order_total
-        source_file_id: source2
-        column_name: total
-  - destination_field: order_count
-    policy:
-      type: count
-    source_fields:
-      - id: order_id
-        source_file_id: source2
-        column_name: order_id
-  - destination_field: avg_order
-    policy:
-      type: average
-    source_fields:
-      - id: order_avg
-        source_file_id: source2
-        column_name: total
-  - destination_field: min_order
-    policy:
-      type: min
-    source_fields:
-      - id: order_min
-        source_file_id: source2
-        column_name: total
-  - destination_field: max_order
-    policy:
-      type: max
-    source_fields:
-      - id: order_max
-        source_file_id: source2
-        column_name: total
+query:
+  type: dsl
+  destination_schema:
+    - name: id
+      data_type: Int64
+    - name: name
+      data_type: String
+    - name: total_value
+      data_type: Float64
+    - name: order_count
+      data_type: Int64
+    - name: avg_order
+      data_type: Float64
+    - name: min_order
+      data_type: Float64
+    - name: max_order
+      data_type: Float64
+  primary_keys:
+    logic: and
+    keys:
+      - id
+  mappings:
+    - destination_field: id
+      policy:
+        type: firstMatch
+        priority:
+          - source1
+          - source2
+      source_fields:
+        - id: customer_id_1
+          source_file_id: source1
+          column_name: customer_id
+        - id: customer_id_2
+          source_file_id: source2
+          column_name: customer_id
+    - destination_field: name
+      policy:
+        type: firstMatch
+        priority:
+          - source1
+      source_fields:
+        - id: first_name
+          source_file_id: source1
+          column_name: first_name
+    - destination_field: total_value
+      policy:
+        type: sum
+      source_fields:
+        - id: order_total
+          source_file_id: source2
+          column_name: total
+    - destination_field: order_count
+      policy:
+        type: count
+      source_fields:
+        - id: order_id
+          source_file_id: source2
+          column_name: order_id
+    - destination_field: avg_order
+      policy:
+        type: average
+      source_fields:
+        - id: order_avg
+          source_file_id: source2
+          column_name: total
+    - destination_field: min_order
+      policy:
+        type: min
+      source_fields:
+        - id: order_min
+          source_file_id: source2
+          column_name: total
+    - destination_field: max_order
+      policy:
+        type: max
+      source_fields:
+        - id: order_max
+          source_file_id: source2
+          column_name: total

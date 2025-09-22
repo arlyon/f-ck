@@ -1,4 +1,12 @@
 [tools]
 "cargo:cargo-insta" = "latest"
 "cargo:https://github.com/cksac/fake-rs" = { version = "latest", features = "cli" }
+python = "latest"
 rust = "nightly"
+
+[tasks.fetch-test-data]
+run = [
+    "curl -L https://www.kaggle.com/api/v1/datasets/download/olistbr/brazilian-ecommerce -o test_data/olist/olist.zip",
+    "unzip -o test_data/olist/olist.zip -d test_data/olist",
+    "rm test_data/olist/olist.zip",
+]

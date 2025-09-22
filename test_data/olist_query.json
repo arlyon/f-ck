@@ -1,0 +1,62 @@
+{
+	"$schema": "./query-schema.json",
+	"sources": [
+		{
+			"id": "customers",
+			"path": "test_data/olist/olist_customers_dataset.csv",
+			"format": "csv"
+		},
+		{
+			"id": "orders",
+			"path": "test_data/olist/olist_orders_dataset.csv",
+			"format": "csv"
+		}
+	],
+	"query": {
+		"type": "dsl",
+		"destination_schema": [
+			{
+				"name": "customer_id",
+				"data_type": "Int64"
+			},
+			{
+				"name": "orders_count",
+				"data_type": "Int64"
+			}
+		],
+		"primary_keys": {
+			"logic": "or",
+			"keys": ["customer_id"]
+		},
+		"mappings": [
+			{
+				"destination_field": "customer_id",
+				"policy": {
+					"type": "firstMatch"
+				},
+				"source_fields": [
+					{
+						"source_file_id": "customers",
+						"column_name": "id"
+					},
+					{
+						"source_file_id": "orders",
+						"column_name": "customer_id"
+					}
+				]
+			},
+			{
+				"destination_field": "orders_count",
+				"policy": {
+					"type": "count"
+				},
+				"source_fields": [
+					{
+						"source_file_id": "orders",
+						"column_name": "order_status"
+					}
+				]
+			}
+		]
+	}
+}

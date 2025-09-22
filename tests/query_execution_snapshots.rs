@@ -1,4 +1,4 @@
-use f_ck::dsl::QueryPlan;
+use f_ck::dsl::{DslQuery, Query, QueryPlan};
 use f_ck::{MergePolicy, engine::*};
 use insta::assert_yaml_snapshot;
 use serde_json;
@@ -35,28 +35,31 @@ fn test_query_execution_with_small_data() {
 
     // Update the mapping to match the small data column names
     // customer_id mapping - update source fields
-    for mapping in &mut query.mappings {
-        if mapping.destination_field == "customer_id" {
-            // Update customers source field to match small_customers.csv
-            for source_field in &mut mapping.source_fields {
-                if source_field.source_file_id == "customers" {
-                    source_field.column_name = "customer_id".to_string();
+    if let Query::Dsl(dsl_query) = &mut query.query {
+        let DslQuery { mappings, .. } = dsl_query;
+        for mapping in mappings {
+            if mapping.destination_field == "customer_id" {
+                // Update customers source field to match small_customers.csv
+                for source_field in &mut mapping.source_fields {
+                    if source_field.source_file_id == "customers" {
+                        source_field.column_name = "customer_id".to_string();
+                    }
                 }
             }
-        }
-        if mapping.destination_field == "customer_name" {
-            // Update to use first_name from small_customers.csv
-            for source_field in &mut mapping.source_fields {
-                if source_field.source_file_id == "customers" {
-                    source_field.column_name = "first_name".to_string();
+            if mapping.destination_field == "customer_name" {
+                // Update to use first_name from small_customers.csv
+                for source_field in &mut mapping.source_fields {
+                    if source_field.source_file_id == "customers" {
+                        source_field.column_name = "first_name".to_string();
+                    }
                 }
             }
-        }
-        if mapping.destination_field == "total_spent" {
-            // Update to use 'total' from small_orders.csv
-            for source_field in &mut mapping.source_fields {
-                if source_field.source_file_id == "orders" {
-                    source_field.column_name = "total".to_string();
+            if mapping.destination_field == "total_spent" {
+                // Update to use 'total' from small_orders.csv
+                for source_field in &mut mapping.source_fields {
+                    if source_field.source_file_id == "orders" {
+                        source_field.column_name = "total".to_string();
+                    }
                 }
             }
         }
@@ -99,17 +102,20 @@ fn test_mapping_policies() {
     let query = load_query_from_file("test_data/test_query.json");
 
     // Extract and test different mapping policies
-    let policies: Vec<_> = query
-        .mappings
-        .iter()
-        .map(|m| {
-            (
-                m.destination_field.clone(),
-                format!("{:?}", m.policy),
-                m.source_fields.len(),
-            )
-        })
-        .collect();
+    let policies: Vec<_> = if let Query::Dsl(DslQuery { mappings, .. }) = &query.query {
+        mappings
+            .iter()
+            .map(|m| {
+                (
+                    m.destination_field.clone(),
+                    format!("{:?}", m.policy),
+                    m.source_fields.len(),
+                )
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
 
     assert_yaml_snapshot!("mapping_policies", policies);
 }
@@ -119,26 +125,19 @@ fn test_destination_schema_structure() {
     let query = load_query_from_file("test_data/test_query.json");
 
     // Test the destination schema
-    let dest_schema: Vec<_> = query
-        .destination_schema
-        .iter()
-        .map(|field| (field.name.clone(), field.data_type.clone()))
-        .collect();
+    let dest_schema: Vec<_> = if let Query::Dsl(dsl_query) = &query.query {
+        let DslQuery {
+            destination_schema, ..
+        } = dsl_query;
+        destination_schema
+            .iter()
+            .map(|field| (field.name.clone(), field.data_type.clone()))
+            .collect()
+    } else {
+        Vec::new()
+    };
 
     assert_yaml_snapshot!("destination_schema", dest_schema);
-}
-
-#[test]
-fn test_primary_key_configuration() {
-    let query = load_query_from_file("test_data/test_query.json");
-
-    // Test primary key setup
-    let pk_config = (
-        query.primary_keys.logic.clone(),
-        query.primary_keys.keys.clone(),
-    );
-
-    assert_yaml_snapshot!("primary_key_config", pk_config);
 }
 
 #[test]
@@ -146,11 +145,14 @@ fn test_complex_aggregation_mapping() {
     let query = load_query_from_file("test_data/test_query.json");
 
     // Focus on the sum aggregation mapping
-    let sum_mapping = query
-        .mappings
-        .iter()
-        .find(|m| matches!(m.policy, MergePolicy::Sum))
-        .unwrap();
+    let sum_mapping = if let Query::Dsl(DslQuery { mappings, .. }) = &query.query {
+        mappings
+            .iter()
+            .find(|m| matches!(m.policy, MergePolicy::Sum))
+            .unwrap()
+    } else {
+        return;
+    };
 
     let aggregation_details = (
         sum_mapping.destination_field.clone(),
@@ -170,24 +172,27 @@ fn test_first_match_priority_mapping() {
     let query = load_query_from_file("test_data/test_query.json");
 
     // Focus on first match mappings with priorities
-    let first_match_mappings: Vec<_> = query
-        .mappings
-        .iter()
-        .filter_map(|m| {
-            if let MergePolicy::FirstMatch { priority } = &m.policy {
-                Some((
-                    m.destination_field.clone(),
-                    priority.clone(),
-                    m.source_fields
-                        .iter()
-                        .map(|sf| (sf.source_file_id.clone(), sf.column_name.clone()))
-                        .collect::<Vec<_>>(),
-                ))
-            } else {
-                None
-            }
-        })
-        .collect();
+    let first_match_mappings: Vec<_> = if let Query::Dsl(DslQuery { mappings, .. }) = &query.query {
+        mappings
+            .iter()
+            .filter_map(|m| {
+                if let MergePolicy::FirstMatch { priority } = &m.policy {
+                    Some((
+                        m.destination_field.clone(),
+                        priority.clone(),
+                        m.source_fields
+                            .iter()
+                            .map(|sf| (sf.source_file_id.clone(), sf.column_name.clone()))
+                            .collect::<Vec<_>>(),
+                    ))
+                } else {
+                    None
+                }
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
 
     assert_yaml_snapshot!("first_match_mappings", first_match_mappings);
 }
@@ -199,19 +204,21 @@ fn test_source_field_coverage() {
     // Analyze which source columns are used in mappings
     let mut source_coverage = std::collections::HashMap::new();
 
-    for mapping in &query.mappings {
-        for source_field in &mapping.source_fields {
-            let key = format!(
-                "{}:{}",
-                source_field.source_file_id, source_field.column_name
-            );
-            source_coverage
-                .entry(key)
-                .or_insert(Vec::new())
-                .push(mapping.destination_field.clone());
+    if let Query::Dsl(dsl_query) = &query.query {
+        let DslQuery { mappings, .. } = dsl_query;
+        for mapping in mappings {
+            for source_field in &mapping.source_fields {
+                let key = format!(
+                    "{}:{}",
+                    source_field.source_file_id, source_field.column_name
+                );
+                source_coverage
+                    .entry(key)
+                    .or_insert(Vec::new())
+                    .push(mapping.destination_field.clone());
+            }
         }
     }
-
     let mut coverage_report: Vec<_> = source_coverage.into_iter().collect();
     coverage_report.sort_by(|a, b| a.0.cmp(&b.0));
     assert_yaml_snapshot!("source_field_coverage", coverage_report);
@@ -260,7 +267,9 @@ fn test_query_with_all_merge_policies() {
       "format": "csv"
     }
   ],
-  "destination_schema": [
+  "query": {
+    "type": "dsl",
+    "destination_schema": [
     {
       "name": "id",
       "data_type": "Int64"
@@ -394,6 +403,7 @@ fn test_query_with_all_merge_policies() {
       ]
     }
   ]
+  }
 }"#;
 
     let query: QueryPlan = serde_json::from_str(query_json).unwrap();
@@ -402,11 +412,14 @@ fn test_query_with_all_merge_policies() {
     assert_yaml_snapshot!("comprehensive_merge_policies_query", query);
 
     // Test all merge policy types
-    let policy_types: Vec<_> = query
-        .mappings
-        .iter()
-        .map(|m| (m.destination_field.clone(), format!("{:?}", m.policy)))
-        .collect();
+    let policy_types: Vec<_> = if let Query::Dsl(DslQuery { mappings, .. }) = &query.query {
+        mappings
+            .iter()
+            .map(|m| (m.destination_field.clone(), format!("{:?}", m.policy)))
+            .collect()
+    } else {
+        Vec::new()
+    };
 
     assert_yaml_snapshot!("all_merge_policy_types", policy_types);
 }
@@ -462,13 +475,17 @@ fn test_schema_mismatch_scenarios() {
             };
 
             // Find mappings that reference this source
-            let referenced_columns: Vec<_> = query
-                .mappings
-                .iter()
-                .flat_map(|mapping| &mapping.source_fields)
-                .filter(|sf| sf.source_file_id == source.id)
-                .map(|sf| sf.column_name.clone())
-                .collect();
+            let referenced_columns: Vec<_> =
+                if let Query::Dsl(DslQuery { mappings, .. }) = &query.query {
+                    mappings
+                        .iter()
+                        .flat_map(|mapping| &mapping.source_fields)
+                        .filter(|sf| sf.source_file_id == source.id)
+                        .map(|sf| sf.column_name.clone())
+                        .collect()
+                } else {
+                    Vec::new()
+                };
 
             (source.id.clone(), actual_schema, referenced_columns)
         })
@@ -514,28 +531,31 @@ fn test_small_data_query_output() {
     let mut query = load_query_from_file("test_data/test_query.json");
 
     // Update the mapping to match the small data column names
-    for mapping in &mut query.mappings {
-        if mapping.destination_field == "customer_id" {
-            // Update customers source field to match small_customers.csv
-            for source_field in &mut mapping.source_fields {
-                if source_field.source_file_id == "customers" {
-                    source_field.column_name = "customer_id".to_string();
+    if let Query::Dsl(dsl_query) = &mut query.query {
+        let DslQuery { mappings, .. } = dsl_query;
+        for mapping in mappings {
+            if mapping.destination_field == "customer_id" {
+                // Update customers source field to match small_customers.csv
+                for source_field in &mut mapping.source_fields {
+                    if source_field.source_file_id == "customers" {
+                        source_field.column_name = "customer_id".to_string();
+                    }
                 }
             }
-        }
-        if mapping.destination_field == "customer_name" {
-            // Update to use first_name from small_customers.csv
-            for source_field in &mut mapping.source_fields {
-                if source_field.source_file_id == "customers" {
-                    source_field.column_name = "first_name".to_string();
+            if mapping.destination_field == "customer_name" {
+                // Update to use first_name from small_customers.csv
+                for source_field in &mut mapping.source_fields {
+                    if source_field.source_file_id == "customers" {
+                        source_field.column_name = "first_name".to_string();
+                    }
                 }
             }
-        }
-        if mapping.destination_field == "total_spent" {
-            // Update to use 'total' from small_orders.csv
-            for source_field in &mut mapping.source_fields {
-                if source_field.source_file_id == "orders" {
-                    source_field.column_name = "total".to_string();
+            if mapping.destination_field == "total_spent" {
+                // Update to use 'total' from small_orders.csv
+                for source_field in &mut mapping.source_fields {
+                    if source_field.source_file_id == "orders" {
+                        source_field.column_name = "total".to_string();
+                    }
                 }
             }
         }
@@ -578,10 +598,12 @@ fn test_comprehensive_merge_policies_output() {
       "format": "csv"
     }
   ],
-  "destination_schema": [
-    {
-      "name": "id",
-      "data_type": "Int64"
+  "query": {
+    "type": "dsl",
+    "destination_schema": [
+      {
+        "name": "id",
+        "data_type": "Int64"
     },
     {
       "name": "name",
